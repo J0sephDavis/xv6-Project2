@@ -1,0 +1,20 @@
+#from ./Makefile
+fs
+fs.img
+.gdbinit
+.bochsrc
+dist
+#from ./kernel/makefile.mk
+kernel/*.out
+kernel/*.[do]
+kernel/vectors.S
+kernel/bootblock
+kernel/kernel
+bootother
+initcode
+#from ./tools/makefile.mk
+tools/mkfs
+tools/*.[do]
+#from ./user/makefile.mk
+user/bin
+user/*.[od]
