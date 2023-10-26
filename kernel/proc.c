@@ -5,6 +5,7 @@
 #include "x86.h"
 #include "proc.h"
 #include "spinlock.h"
+#include "include/pstat.h"
 
 struct {
   struct spinlock lock;
@@ -334,31 +335,36 @@ int settickets(int numTickets) {
 ///check the name of arrays of the LaTable in pstat, and the names of the varibles of the process in proc.h
 //READ THE ELEMENTS OF PSTAT IN THE DESCRIPTION OF THE PROJECT TO MAKE SENSE OF THISsaveInfo(
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
-
+//what part of the assignment is this even for?
 //int saveInfo(struct pstat* LaTable)  //create a pointer able to point to object of the tpe pstat
 //{
-//	struct proc *p;   //Create a pointer able to point to objects of the type proc (process) 
-//	int i = 0; // used to iterate througt the slots of the arrays in pstat
-//	acquire(&ptable.lock);  //lock the ptable (array containing the process) 
-//	for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){  // use p to iterate throght the ptable 
-//		if(p->state == ZOMBIE || p->state == EMBRYO){  //check the state of a process, if it is different of ZOMBY and EMBRIO 
+//	//Pointer to process
+//	struct proc *p;
+//	//Iterator for pstat array
+//	int i = 0;
+//	//Lock the ptable 
+//	acquire(&ptable.lock);
+//	//current_process is used to iterate through all processes
+//	for(current_process = ptable.proc; p < &ptable.proc[NPROC]; p++) {
+//		//if cp is ZOMBIE or EMBRYO, continue to next process
+//		if(current_process->state == ZOMBIE || current_process->state == EMBRYO)
 //			continue;
-//		}
-//		if(p->state == UNUSED){
+//		//if cp is UNUSED, mark as not in use?
+//		if(current_process->state == UNUSED)
 //			LaTable->inuse[i] = 0;  //check the name of the arrays in pstat. 
-//		}
-//		else{
+//		else
 //			LaTable->inuse[i] = 1; 
-//		}
-//		LaTable->pid[i] = p-> //with the pid of the process p->
-//		LaTable->tickets[i] = p-> //with the number of ti
-//		LaTable->ticks[i] = p-> //with the number of time the process has runned in the cpu
+//		//update LaTable with PID
+//		LaTable->pid[i] = current_process->pid;
+//		//update LaTable with tickets
+//		LaTable->tickets[i] = current_process->numTickets;
+//		//update LaTable with ticks
+//		LaTable->ticks[i] = current_process->numTicks;
 //		i++;
 //	}
 //	release(&ptable.lock);
 //	return 0;	
 //}
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 
