@@ -14,28 +14,20 @@ sys_fork(void)
   return fork();
 }
 
-//////////// your code here  /////////////////////////////////////////////////////////////////////////////////////////////////////
-/////we use this system call for changing the number of tickets of some process
-/////remember by default every process has just 1 ticket.
-///  because you are calling assigntickets(ticketsGotIt) which is define in proc.c you have to update defs.h with this new system call
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// HERE THE PROTOTYPE
-//int sys_assigntickets(void)
-//{
-//	int ticketsGotIt
-//	if (argint(0, &ticketsGotIt) < 0)  //this is the way to pass an integer as a parameters in sysproc.c, will pass this tickets in the experiment
-//	{
-//		return -1;  //validation line	
-//	}
-//	else{
-//		return assigntickets(ticketsGotIt); //assigntickets big implementation is in pro.c
-//	}
-//}
-//////////// your code here  /////////////////////////////////////////////////////////////////////////////////////////////////////
-/////we use this system call for filling out the arrays of pstat data structure
-/////So, remember to include here the pstat.h header file 
-///  because you are calling assigntickets(ticketsGotIt) which is define in proc.c you have to update defs.h with this new system call
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//System call to change the number of tickets of a process
+int sys_settickets(void) {
+	int tickets_to_set;
+	//this is the way to pass an integer as a parameters in sysproc.c, will pass this tickets in the experiment
+	//not actually sure what the above comment is supposed to convey... 
+	if (argint(0, &tickets_to_set) < 0)
+		return -1;
+	return settickets(tickets_to_set);
+}
+////////// your code here  /////////////////////////////////////////////////////////////////////////////////////////////////////
+////we use this system call for filling out the arrays of pstat data structure
+////So, remember to include here the pstat.h header file 
+//  because you are calling assigntickets(ticketsGotIt) which is define in proc.c you have to update defs.h with this new system call
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 //int sys_saveData(void)
 //{
@@ -49,7 +41,7 @@ sys_fork(void)
 //	saveData(pTable);  //call the getpinf() in proc.c 		
 //	return 0;
 //}
-//////////////////////////////////////////////////////
+////////////////////////////////////////////////////
 	
 	int
 sys_exit(void)

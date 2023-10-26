@@ -109,7 +109,7 @@ void            userinit(void);
 int             wait(void);
 void            wakeup(void*);
 void            yield(void);
-void            settickets(void);
+int 		settickets(int);
 
 // swtch.S
 void            swtch(struct context**, struct context*);
