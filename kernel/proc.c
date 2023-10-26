@@ -46,15 +46,9 @@ found:
   p->state = EMBRYO;
   p->pid = nextpid++;
   
-  /////// your code here//////////////////////////////
-  //initialize for all process the variable for number of tickets that you define in proc.h equal to 1
-  // initialize the number of times the process is scheudle in the cpu equal to 0
-  // p -> number of ticket =1
-  // p -> number of times schedule in the cpu =0
-  //get the names of these variables from proc.h 
-  /////////////////////////////////////////////////////
-
-
+  // Initialize the number of tickets & number of time the process has been scheduled
+  p->numTickets = 1;
+  p->numTicks = 0;
 
   release(&ptable.lock);
 
@@ -164,12 +158,7 @@ fork(void)
       np->ofile[i] = filedup(proc->ofile[i]);
   np->cwd = idup(proc->cwd);
  
-  ////your code here///// 
-  ////children inheritance the tickets from their parents//////
-  // proc is current process (i.e. parent)
-  ///np->number of tickets  = something like the parent -> number of tickets
-  ///get the exact the name fo number of tickets from proc.h the parent from the previous comment or some lines above
-  /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////		
+  np->numTickets = proc->numTickets; //new process tickets  = parent process tickets
 
 
  
@@ -328,19 +317,15 @@ scheduler(void)
   }
 }
 
-/////////////// your code here  first system call //////////////////////////////////
-////Assign the tickets passed by the user to variable number of tickets of the process, 
-///check the name of this variable in proc.h
-///////////////////////////////////////////////////////////////////////////////////////
-//int assigntickets(int passTickets)
-//{
-	//make validation here, if you want 
-
-//	proc->variable ticket of the process  = passTickets;
-//	return 0;
-//}
-////////////////////////////////////////////////////////////////
-
+//Set a processes tickets to the passed amount. Cannot be less than 1
+int settickets(int numTickets) {
+	//return -1 if the caller requested <1 tickets
+	if (numTickets < 1) return -1;
+	//updated process tickets
+	proc->numTickets = numTickets;
+	//return successful
+	return 0;
+}
 
 
 /////////////// your code here  second system call //////////////////////////////////////////////////////
