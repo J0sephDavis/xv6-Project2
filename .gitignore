@@ -1,6 +1,7 @@
 #from ./Makefile
 fs
 fs.img
+xv6.img
 .gdbinit
 .bochsrc
 dist
