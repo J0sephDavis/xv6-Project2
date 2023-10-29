@@ -1,7 +1,8 @@
 #ifndef _USER_H_
 #define _USER_H_
-
+#include "types.h" // without this include, it compiles with a plethora of errors, all referring to 'uint' not being defined.
 struct stat;
+struct pstat;
 
 // system calls
 int fork(void);
