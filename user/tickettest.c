@@ -5,10 +5,13 @@
 //(all other processes will have their 1 tickets they began with on the system).
 int main() {
 	int forkVal,iterator;
-	for (iterator = 1; iterator < 5; iterator++) {
+	for (iterator = 1; iterator <= 5; iterator++) {
 		forkVal = fork();
 		if (forkVal == 0) {//child
 			settickets(iterator*10);
+			printf(0,"\nCHILD with %d tickets.\n", iterator*10);
+			for (int a = 0; a < 1000; a++);
+			break;
 		}
 	}
 }
