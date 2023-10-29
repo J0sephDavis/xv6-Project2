@@ -22,13 +22,15 @@ int sys_settickets(void) {
 	//not actually sure what the above comment is supposed to convey... 
 	if (argint(0, &tickets_to_set) < 0)
 		return -1;
+	if (tickets_to_set < 1)
+		return -1;
 	return settickets(tickets_to_set);
 }
 ////we use this system call for filling out the arrays of pstat data structure
 int sys_getpinfo(void) {
 	struct pstat *table; 						//pointer to table containing pstat information
 	if (argptr(0, (void *)&table, sizeof(*table)) < 0) return -1;	//if we were given nothing when it was called, return FAILURE
-	if (table == 0x00) return -1; 					//if the pointer is NULL, return FAILURE
+	if (table == NULL) return -1; 					//if the pointer is NULL, return FAILURE
 	getpinfo(table); 						//call getpinfo()
 	return 0; 							//return success
 }
