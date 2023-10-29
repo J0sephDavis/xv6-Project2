@@ -1,12 +1,12 @@
-#include "proc.h"
-#include "defs.h"
-#include "include/pstat.h"
-#include "kernel/rand.h"
-#include "mmu.h"
-#include "param.h"
-#include "spinlock.h"
 #include "types.h"
+#include "defs.h"
+#include "param.h"
+#include "mmu.h"
 #include "x86.h"
+#include "proc.h"
+#include "spinlock.h"
+#include "rand.h"
+#include "pstat.h"
 
 struct {
   struct spinlock lock;
@@ -252,37 +252,36 @@ void scheduler(void) {
   
   for (;;) {
 	// Enable interrupts on this processor.
-	
-	// the total tickets to draw.. but how do we know who is who? say someone has 12 tickets, how do we remember?
-	int totalTickets = 0;
-	
-	//what is this? -> sti()?
+	//what is "sti()"?
 	sti();
 	
 	// iterate over all processes and summate tickets
-	//iterate through all processes in table to computer totalTickets
-	acquire(&ptable.lock); //lock table
-	for (struct proc current_process = ptable.proc; current_process < &ptable.proc[NPROC]; current_process++)
-		totalTickets += current_process->numTickets;
-	release(&ptable.lock); //unlock table
-	
-	// Determine a winner
-	int lotteryWinner = rand() % totalTickets + 1;
+	int totalTickets = 0; 	// the count of all tickets held by all processes
+	acquire(&ptable.lock); 	//lock table
+	for (p = ptable.proc; p < &ptable.proc[NPROC]; p++) 	//for-each process in process-table
+		if (p->state == RUNNABLE) 			//if the process can be run
+			totalTickets += p->numTickets; 		//add the processes tickets to the totalTickets
+	release(&ptable.lock); 	//unlock table
+
+	int lotteryWinner = rand() % totalTickets + 1; 		//The number of tickets that must be exceeded to choose the winner
 	
 	// Loop over process table looking for process to run.
-	p = ptable.proc[lotteryWinner]
+	int _ticket_counter_ = 0;
 	acquire(&ptable.lock);
 	for (p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
 		// if the process is not runnable, skip to next process
 		if (p->state != RUNNABLE)
-		  continue;
-		
+			continue;
+		_ticket_counter_ += p->numTickets; 	//increment the ticket counter
+		if (_ticket_counter_ < lotteryWinner) 	//if this isn't a winner, skip to the next process
+			continue;
 		// Switch to chosen process.  It is the process's job
 		// to release ptable.lock and then reacquire it
 		// before jumping back to us.
 		proc = p;
 		switchuvm(p);
 		p->state = RUNNING;
+		p->numTicks++;
 		swtch(&cpu->scheduler, proc->context);
 		switchkvm();
 		
@@ -305,45 +304,30 @@ int settickets(int numTickets) {
   return 0;
 }
 
-/////////////// your code here  second system call
-///////////////////////////////////////////////////////// /fill the arrays of
-///the pstat data structure with the information of the process check the name
-/// of this variable in proc.h check the name of arrays of the LaTable in pstat,
-/// and the names of the varibles of the process in proc.h
-// READ THE ELEMENTS OF PSTAT IN THE DESCRIPTION OF THE PROJECT TO MAKE SENSE OF
-// THISsaveInfo(
-///////////////////////////////////////////////////////////////////////////////////////////////////////////
-// what part of the assignment is this even for?
-// int saveInfo(struct pstat* LaTable)  //create a pointer able to point to
-// object of the tpe pstat
-//{
-//	//Pointer to process
-//	struct proc *p;
-//	//Iterator for pstat array
-//	int i = 0;
-//	//Lock the ptable
-//	acquire(&ptable.lock);
-//	//current_process is used to iterate through all processes
-//	for(current_process = ptable.proc; p < &ptable.proc[NPROC]; p++) {
-//		//if cp is ZOMBIE or EMBRYO, continue to next process
-//		if(current_process->state == ZOMBIE || current_process->state ==
-//EMBRYO) 			continue;
-//		//if cp is UNUSED, mark as not in use?
-//		if(current_process->state == UNUSED)
-//			LaTable->inuse[i] = 0;  //check the name of the arrays in
-//pstat. 		else 			LaTable->inuse[i] = 1;
-//		//update LaTable with PID
-//		LaTable->pid[i] = current_process->pid;
-//		//update LaTable with tickets
-//		LaTable->tickets[i] = current_process->numTickets;
-//		//update LaTable with ticks
-//		LaTable->ticks[i] = current_process->numTicks;
-//		i++;
-//	}
-//	release(&ptable.lock);
-//	return 0;
-// }
+/* getpinfo(struct pstat *), updates the variables of the pointer to include the process-information
+ * return 0 on success and -1 on FAILURE*/
+int getpinfo(struct pstat *referenced_table){
+	if (referenced_table == NULL) return -1; //if the pointer is NULL, return FAILURE
 
+	struct proc *process; 	//points to a process structure
+	int index = 0; 		//current index in pstat referenced_table
+	//
+	acquire(&ptable.lock); 	//acquire a lock to the table so that it isn't touched while we use it
+	for (process = ptable.proc; process < &ptable.proc[NPROC]; process++) { //for-each process in the process-table
+		if(process->state == ZOMBIE || process->state == EMBRYO)	//if process ZOMBIE or EMBRYO, skip.
+			continue;
+		//update the table with in-use, PID, numTickets, & numTicks
+		referenced_table->inuse[index] = (process->state != UNUSED); //1 if used, 0 if unused
+		referenced_table->pid[index] = process->pid;
+		referenced_table->tickets[index] = process->numTickets;
+		referenced_table->ticks[index] = process->numTicks;
+		//increment counter
+		index++;
+	} release(&ptable.lock); 	//released the lock so that the table can be used
+	//
+
+	return 0; //if function has reached end of execution, return SUCCESS
+}
 // Enter scheduler.  Must hold only ptable.lock
 // and have changed proc->state.
 void sched(void) {
