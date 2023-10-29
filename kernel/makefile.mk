@@ -28,7 +28,7 @@ KERNEL_OBJECTS := \
 	uart.o\
 	vectors.o\
 	vm.o\
-	rand.o\
+	rand.o
 
 KERNEL_OBJECTS := $(addprefix kernel/, $(KERNEL_OBJECTS))
 

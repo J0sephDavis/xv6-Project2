@@ -75,8 +75,8 @@ struct proc {
   struct inode *cwd;           // Current directory
   char name[16];               // Process name (debugging)
 
-  int numTickets; 		//The number of tickets the process has
-  int numTicks; 		//The number of times the process is scheduled on the cpu
+  uint numTickets; 		//The number of tickets the process has
+  uint numTicks; 		//The number of times the process is scheduled on the cpu
  
 };
 

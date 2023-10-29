@@ -27,7 +27,7 @@ char* sbrk(int);
 int sleep(int);
 int uptime(void);
 int cluis(void);
-int settickets(int);
+int settickets(uint);
 int getpinfo(struct pstat*);
 
 // user library functions (ulib.c)
