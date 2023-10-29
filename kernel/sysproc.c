@@ -5,7 +5,7 @@
 #include "mmu.h"
 #include "proc.h"
 #include "sysfunc.h"
-#include "include/pstat.h"
+#include "pstat.h"
 
 int counter=0;
 
@@ -24,23 +24,15 @@ int sys_settickets(void) {
 		return -1;
 	return settickets(tickets_to_set);
 }
-////////// your code here  /////////////////////////////////////////////////////////////////////////////////////////////////////
 ////we use this system call for filling out the arrays of pstat data structure
+int sys_getpinfo(void) {
+	struct pstat *table; 						//pointer to table containing pstat information
+	if (argptr(0, (void *)&table, sizeof(*table)) < 0) return -1;	//if we were given nothing when it was called, return FAILURE
+	if (table == 0x00) return -1; 					//if the pointer is NULL, return FAILURE
+	getpinfo(table); 						//call getpinfo()
+	return 0; 							//return success
+}
 
-//int sys_saveData(void)
-//{
-//	struct pstat *pTable; //create a pointer able to point to objects of the type pstat//
-//	if(argptr(0, (void *)&pTable, sizeof(*pTable)) < 0){ //this is the way to pass a pointer to an object as a parameter in sysproc.c, will pass this tickets in the experiment
-//		return -1;  //validation
-//	}
-//	if(pInfo == NULL){  //validation 
-//		return -1;
-//	}			
-//	saveData(pTable);  //call the getpinf() in proc.c 		
-//	return 0;
-//}
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	
 int
 sys_exit(void)
 	
