@@ -9,6 +9,7 @@ struct pipe;
 struct proc;
 struct spinlock;
 struct stat;
+struct pstat;
 
 // bio.c
 void            binit(void);
@@ -110,7 +111,7 @@ int             wait(void);
 void            wakeup(void*);
 void            yield(void);
 int 		settickets(int);
-//int 		saveInfo(int); //not in the project directions, but it is in both sysproc.c & proc.c
+int 		getpinfo(struct pstat*);
 
 // swtch.S
 void            swtch(struct context**, struct context*);
