@@ -255,26 +255,25 @@ void scheduler(void) {
 	//what is "sti()"?
 	sti();
 	
-	// iterate over all processes and summate tickets
-	int totalTickets = 0; 	// the count of all tickets held by all processes
-	acquire(&ptable.lock); 	//lock table
-	for (p = ptable.proc; p < &ptable.proc[NPROC]; p++) 	//for-each process in process-table
-		if (p->state == RUNNABLE) 			//if the process can be run
-			totalTickets += p->numTickets; 		//add the processes tickets to the totalTickets
-	release(&ptable.lock); 	//unlock table
+	uint ticketCounter = 0; 				// the count of all tickets held by all processes
+	acquire(&ptable.lock); 				//lock table
+	for (p = ptable.proc; p < &ptable.proc[NPROC]; p++) 	//for-each process in process-table, summate tickets
+		if (p->state == RUNNABLE){ 			//if the process can be run
+			ticketCounter = ticketCounter + p->numTickets; 	//add the processes tickets to the ticketCounter
+		}
+	release(&ptable.lock); 				//unlock table
+	if (ticketCounter == 0) continue; 		//if we cannot do a lottery, skip.
+	uint lotteryWinner = (rand() % ticketCounter) + 1; 	//The number of tickets that must be exceeded to choose the winner
 
-	int lotteryWinner = rand() % totalTickets + 1; 		//The number of tickets that must be exceeded to choose the winner
-	
-	// Loop over process table looking for process to run.
-	int _ticket_counter_ = 0;
-	acquire(&ptable.lock);
-	for (p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
-		// if the process is not runnable, skip to next process
-		if (p->state != RUNNABLE)
+	acquire(&ptable.lock); 					//lock table
+	ticketCounter = 0; // reset the count
+	for (p = ptable.proc; p < &ptable.proc[NPROC]; p++) { 	// Loop over process table looking for process to run.
+		if (p->state != RUNNABLE) 			// if the process is not runnable, skip to next process
 			continue;
-		_ticket_counter_ += p->numTickets; 	//increment the ticket counter
-		if (_ticket_counter_ < lotteryWinner) 	//if this isn't a winner, skip to the next process
-			continue;
+		ticketCounter += p->numTickets; 		//increment the ticket counter
+		if (ticketCounter < lotteryWinner) continue;	//if this isn't a winner, skip to the next process
+//		cprintf("!%d,%d|\n",ticketCounter, lotteryWinner);
+
 		// Switch to chosen process.  It is the process's job
 		// to release ptable.lock and then reacquire it
 		// before jumping back to us.
@@ -289,12 +288,12 @@ void scheduler(void) {
 		// It should have changed its p->state before coming back.
 		proc = 0;
 	}
-	release(&ptable.lock);
+	release(&ptable.lock); 					//unlock table
   }
 }
 
 // Set a processes tickets to the passed amount. Cannot be less than 1
-int settickets(int numTickets) {
+int settickets(uint numTickets) {
   // return -1 if the caller requested <1 tickets
   if (numTickets < 1)
     return -1;
