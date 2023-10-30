@@ -17,6 +17,5 @@ int main() {
 			break; 			//so that the fork doesn't somehow spawn its own children.
 		}
 	}
-	printf(0,"exit\n");
 	exit(); //without a proper exit we incur trap penalties
 }
