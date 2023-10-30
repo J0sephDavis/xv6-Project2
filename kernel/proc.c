@@ -42,10 +42,8 @@ found:
   p->state = EMBRYO;
   p->pid = nextpid++;
 
-  // Initialize the number of tickets & number of time the process has been
-  // scheduled
-  p->numTickets = 1;
-  p->numTicks = 0;
+  p->numTickets = 1; 		//initialize tickets
+  p->numTicks = 0; 		//initialize ticks (times process has been scheduled)
 
   release(&ptable.lock);
 
@@ -287,6 +285,7 @@ void scheduler(void) {
 		// Process is done running for now.
 		// It should have changed its p->state before coming back.
 		proc = 0;
+		break;
 	}
 	release(&ptable.lock); 					//unlock table
   }
