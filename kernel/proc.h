@@ -74,11 +74,9 @@ struct proc {
   struct file *ofile[NOFILE];  // Open files
   struct inode *cwd;           // Current directory
   char name[16];               // Process name (debugging)
-  
-   /////// your code here///////
-  // add numtickest here
-  // add numticks here
-  /////////////////////////////
+
+  uint numTickets; 		//The number of tickets the process has
+  uint numTicks; 		//The number of times the process is scheduled on the cpu
  
 };
 
