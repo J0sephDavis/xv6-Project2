@@ -77,6 +77,7 @@ struct proc {
 
   uint numTickets; 		//The number of tickets the process has
   uint numTicks; 		//The number of times the process is scheduled on the cpu
+  uint priority; 		//the priority of the process highest=0, lowest=200
  
 };
 
