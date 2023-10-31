@@ -44,6 +44,8 @@ found:
 
   p->numTickets = 1; 		//initialize tickets
   p->numTicks = 0; 		//initialize ticks (times process has been scheduled)
+  p->priority = 50; 		//initialize priority
+  p->in_queue = 0; 		//initialize queue var
 
   release(&ptable.lock);
 
@@ -246,6 +248,77 @@ int wait(void) {
 //  - eventually that process transfers control
 //      via swtch back to the scheduler.
 void scheduler(void) {
+	struct proc *p;
+	uint current_priority 	= 200; 		//the current priority(highest priority) that we are running processes at
+	int total_priority = 0; 		//total processes in the priority_queue
+	struct proc priority_queue[NPROC]; 		//contains the processes that are to run
+	//
+	for (;;) { 				// Enable interrupts on this processor.
+		//what is "sti()"?
+		sti();
+		//
+		int tmp_highest = 200; 		//current highest priority
+		int count_highest = 0; 		//count of runnable programs at highest priorities
+//		int run_newProcess = 0; 	//flag, when 1 we run the process at the final index in the queue
+		//
+		acquire(&ptable.lock); 						//get table lock
+		for (p = ptable.proc; p < &ptable.proc[NPROC]; p++) { 		//for loop to determine the highest priority & amount of processes at that priority
+			if (p->state != RUNNABLE) continue;
+			cprintf("priority %d->%d\n", tmp_highest, p->priority);
+			if (p->priority < tmp_highest){ 
+				cprintf("priority %d->%d\n", tmp_highest, p->priority);
+				tmp_highest = p->priority; 			//set the new highest priority
+				count_highest = 1; 				//set the count to 1
+			}
+			else if (p->priority == tmp_highest) count_highest++; 	//if we have multiple processes at max priority, count
+		}
+		if (count_highest == 0) continue;
+		cprintf("tmp_highest:%d,count_highest:%d\n",tmp_highest,count_highest);
+		//
+		if (current_priority != tmp_highest) { 				//if the priority queues are absolutely different rebuild
+			cprintf("priority !=\n");
+			int index = 0;
+			for (p = ptable.proc; p<&ptable.proc[NPROC]; p++) {
+				if (p->priority != current_priority) continue; 	//if the priority of the current process isn't what we're looking for, skip
+				priority_queue[index++] = *p; 			//set the current index of the priority_queue to the new value
+			}
+			total_priority = index + 1; 				//the size of the priority_queue
+		}
+		else if (total_priority != count_highest) { 			//if the priorities are equal, BUT the length is not, run new process & add it to the queue
+			cprintf("priority_queue.len !=\n");
+			int index = total_priority;
+			for (p = ptable.proc; p<&ptable.proc[NPROC]; p++) {
+				if (p->priority != current_priority) continue; 	//if the priority of the current process isn't what we're looking for, skip
+				if (p->in_queue == 1) continue; 		//if the process is already in the queue, skip
+				priority_queue[index++] = *p; 			//set the current index of the priority_queue to the new value
+			}
+			total_priority = index + 1; 				//update the size of the priority queue
+//			run_newProcess = 1; 					//flag to let us know we have a new process to get up to speed
+
+		}
+		//for (p = ptable.proc; p < &ptable.proc[NPROC]; p++) { 	// Loop over process table looking for process to run.
+		//for (p = (run_newProcess==1)?&priority_queue[total_priority-1]:priority_queue;	
+		for (p = priority_queue; p < &priority_queue[total_priority]; p++) { 	//loop over all processes in queue
+			if (p->state != RUNNABLE) 				// if the process is not runnable, skip to next process
+				continue;
+			// Switch to chosen process.  It is the process's job
+			// to release ptable.lock and then reacquire it
+			// before jumping back to us.
+			proc = p;
+			switchuvm(p);
+			p->state = RUNNING;
+			p->numTicks++;
+			swtch(&cpu->scheduler, proc->context);
+			switchkvm();
+			// Process is done running for now.
+			// It should have changed its p->state before coming back.
+			proc = 0;
+		}
+		release(&ptable.lock); 					//unlock table
+	}
+}
+//the lottery scheduler
+void lottery_scheduler(void) {
   struct proc *p;
   
   for (;;) {
