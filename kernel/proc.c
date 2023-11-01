@@ -277,6 +277,7 @@ void scheduler(void) {
 			total_priority = 0; 					//reset the size of the priority queue
 			for (p = ptable.proc; p<&ptable.proc[NPROC]; p++) {
 				if (p->priority != current_priority) continue; 	//if the priority of the current process isn't what we're looking for, skip
+				if (p->state != RUNNABLE) continue; 		//if the process isn't runnable, SKIP
 				priority_queue[total_priority++] = p; 			//set the current index of the priority_queue to the new value
 			}
 		}
@@ -287,6 +288,12 @@ void scheduler(void) {
  * 	we must reorder the queue so that the dead processes fall outside of
  * 	the range specified by total_priority or just set to 0x00 or something?
  * */
+//		cprintf("PQ(%d):[\t", total_priority);
+//		for (int f = 0; f < total_priority; f++) { 	//loop over all processes in queue
+//			p = priority_queue[f];
+//			cprintf("[%d](%d)%s | ", p->priority,p->numTicks,p->name);
+//		}
+//		cprintf("]\n");
 		int total_ran = 0; 						//the total processes that have run this loop
 		for (int f = 0; f < total_priority; f++) { 	//loop over all processes in queue
 			p = priority_queue[f];
@@ -296,6 +303,7 @@ void scheduler(void) {
 			// Switch to chosen process.  It is the process's job
 			// to release ptable.lock and then reacquire it
 			// before jumping back to us.
+//			cprintf("%d\t[%d](%d)%s\n", f,p->priority, p->numTicks, p->name);
 			proc = p;
 			switchuvm(p);
 			p->state = RUNNING;
@@ -305,8 +313,10 @@ void scheduler(void) {
 			// Process is done running for now.
 			// It should have changed its p->state before coming back.
 			proc = 0;
+//			cprintf("\n");
 		}
 		//if we didn't run all the processes (meaning SOME died) just force a new table
+//		cprintf("CURRENT PRIORITY WAS: %d [%d - %d]\n", current_priority, total_ran, total_priority);
 		if (total_ran < total_priority)current_priority = 201; 		//THIS IS NOT A SOLUTION, WE SHOULD SIMPLY BE REARRANGING THE QUEUE, NOT JUST FORCING A NEW ONE
 		release(&ptable.lock); 					//unlock table
 	}

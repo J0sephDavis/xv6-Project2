@@ -41,8 +41,6 @@ int sys_setpriority(void) {
 	//not actually sure what the above comment is supposed to convey... 
 	if (argint(0, &priority_to_set) < 0)
 		return -1;
-	if (priority_to_set > 200)
-		return -1;
 	return setpriority(priority_to_set);
 }
 
