@@ -7,6 +7,7 @@ struct pstat {
 	int tickets[NPROC]; 	// number of tickets the process has.
 	int pid[NPROC]; 	// the pid of the process.
 	int ticks[NPROC]; 	// Number of tickets each process has accumulated.
+	int priority[NPROC]; 	// Number of tickets each process has accumulated.
 /*
  * Current assumption is that ticks is the overall amount of tickets
  * that a process has seen. tickets contains the current tickets of

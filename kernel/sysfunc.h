@@ -26,5 +26,6 @@ int sys_uptime(void);
 int sys_luic(void);
 int sys_settickets(void);
 int sys_getpinfo(void);
+int sys_setpriority(void);
 
 #endif // _SYSFUNC_H_

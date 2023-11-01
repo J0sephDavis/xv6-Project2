@@ -108,6 +108,7 @@ static int (*syscalls[])(void) = {
 [SYS_cluis]   sys_cluis,
 [SYS_settickets]  sys_settickets,
 [SYS_getpinfo]   sys_getpinfo,
+[SYS_setpriority]   sys_setpriority,
 };
 
 // Called on a syscall trap. Checks that the syscall number (passed via eax)

@@ -386,12 +386,23 @@ int getpinfo(struct pstat *referenced_table){
 		referenced_table->pid[index] = process->pid;
 		referenced_table->tickets[index] = process->numTickets;
 		referenced_table->ticks[index] = process->numTicks;
+		referenced_table->priority[index] = process->priority;
 		//increment counter
 		index++;
 	} release(&ptable.lock); 	//released the lock so that the table can be used
 	//
 
 	return 0; //if function has reached end of execution, return SUCCESS
+}
+// Set a processes priority, cannot be less than 0 or greater than 200
+int setpriority(int priority) {
+  // return -1 if the caller requested <1 tickets
+  if (priority < 0 || priority > 200)
+    return -1;
+  // updated process tickets
+  proc->priority = priority;
+  // return successful
+  return 0;
 }
 // Enter scheduler.  Must hold only ptable.lock
 // and have changed proc->state.
