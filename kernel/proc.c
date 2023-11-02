@@ -247,77 +247,85 @@ int wait(void) {
 //  - eventually that process transfers control
 //      via swtch back to the scheduler.
 void scheduler(void) {
+	int DEBUG = 0;
 	struct proc* p;
-	uint current_priority 	= 201; 		//the current priority(highest priority) that we are running processes at
-	int total_priority = 0; 		//total processes in the priority_queue
-	struct proc* priority_queue[NPROC]; 		//contains the processes that are to run
+	uint current_priority = 201; 							//the current priority(highest priority) that we are running processes at
+	int total_priority = 0; 							//total processes in the priority_queue
+	struct proc* priority_queue[NPROC]; 						//contains the processes that are to run
 	//
-	for (;;) { 				// Enable interrupts on this processor.
-		//what is "sti()"?
+	for (;;) { 									// Enable interrupts on this processor.
 		sti();
 		//
-		int tmp_highest = 201; 		//current highest priority (initialized as an impossible one)
-		int count_highest = 0; 		//count of runnable programs at highest priorities
+		int tmp_highestPriority = 201; 						//the highest priority found after scouring the table
+		int tmp_countPriority = 0; 						//count of runnable programs at tmp_highestPriority
 		//
-		acquire(&ptable.lock); 						//get table lock
-		for (p = ptable.proc; p < &ptable.proc[NPROC]; p++) { 		//for loop to determine the highest priority & amount of processes at that priority
-			if (p->state != RUNNABLE) continue;
-			if (p->priority < tmp_highest){  			//if there is a process of higher priority than the current highest
-				tmp_highest = p->priority; 			//set the new highest priority
-				count_highest = 1; 				//set the count to 1
-			}
-			else if (p->priority == tmp_highest) 			//if there are processes of equal priority to the current highest
-				count_highest++; 				//if we have multiple processes at max priority, count
-		}
-		if (count_highest == 0) {release(&ptable.lock); continue;};
 		
-		if (current_priority != tmp_highest) { 				//if the priority queues are absolutely different rebuild
-//			cprintf("NEW PRIORITY\n");
-			current_priority = tmp_highest; 			//set the new current priority
-			total_priority = 0; 					//reset the size of the priority queue
+		acquire(&ptable.lock); 							//get table lock
+// How many, if any, processes are waiting to be run at the highest priority?
+		for (p = ptable.proc; p < &ptable.proc[NPROC]; p++) { 			//for loop to determine the highest priority & amount of processes at that priority
+			if (p->state != RUNNABLE) continue; 				//if the program isn't going to be run, SKIP
+			if (p->priority < tmp_highestPriority) {  			//if there is a process of higher priority than tmp_highestPriority
+				tmp_highestPriority = p->priority; 			//update tmp_highestPriority
+				tmp_countPriority = 1; 					//reset tmp_countPriority
+			}
+			else if (p->priority == tmp_highestPriority) 			//if there are processes of EQUAL PRIORITY to the current highest
+				tmp_countPriority++; 					//increment tmp_countPriority
+			//if(DEBUG == 1)cprintf("\t\tfound runnable [%d-%s]\n", p->priority,p->name);
+		}
+		if (tmp_countPriority == 0) { 						//if there are no processes to be run
+			if (DEBUG == 1) cprintf("no processes found.\n");
+			release(&ptable.lock); 						//release the table lock
+			continue; 							//skip this loop
+		};
+		if (DEBUG == 1) cprintf("we have found %d processes at %d priority\n", tmp_countPriority, tmp_highestPriority);
+// Build the priority queue
+		if (current_priority != tmp_highestPriority) { 				//if the priority queues are absolutely different rebuild
+			current_priority = tmp_highestPriority; 			//set the new current priority
+			total_priority = 0; 						//reset the size of the priority queue
 			for (p = ptable.proc; p<&ptable.proc[NPROC]; p++) {
-				if (p->priority != current_priority) continue; 	//if the priority of the current process isn't what we're looking for, skip
-				if (p->state != RUNNABLE) continue; 		//if the process isn't runnable, SKIP
+				if (p->priority != current_priority) continue; 		//if the priority of the current process isn't what we're looking for, skip
+				if (p->state != RUNNABLE) continue; 			//if the process isn't runnable, SKIP
 				priority_queue[total_priority++] = p; 			//set the current index of the priority_queue to the new value
 			}
 		}
-/* Need to check if any processes have died in the queue,
- * if ALL processes died in queue,
- * 	just change current priority & let the table be rebuilt automatically
- * if SOME, but not ALL, processes have died in the qeueue,
- * 	we must reorder the queue so that the dead processes fall outside of
- * 	the range specified by total_priority or just set to 0x00 or something?
- * */
-//		cprintf("PQ(%d):[\t", total_priority);
-//		for (int f = 0; f < total_priority; f++) { 	//loop over all processes in queue
-//			p = priority_queue[f];
-//			cprintf("[%d](%d)%s | ", p->priority,p->numTicks,p->name);
+// Display the contents of the prioirty queue
+//		if(DEBUG == 1) {
+//			cprintf("\tPriority Queue (len:%d)| ", total_priority);
+//			for (int f = 0; f < total_priority; f++) { 	//loop over all processes in queue
+//				p = priority_queue[f];
+//				cprintf("%d:[%d-%s]", f,p->priority,p->name);
+//			}
+//			cprintf("\n");
 //		}
-//		cprintf("]\n");
-		int total_ran = 0; 						//the total processes that have run this loop
-		for (int f = 0; f < total_priority; f++) { 	//loop over all processes in queue
-			p = priority_queue[f];
-			if (p->state != RUNNABLE) 				// if the process is not runnable, skip to next process
-				continue;
-			total_ran++;
-			// Switch to chosen process.  It is the process's job
-			// to release ptable.lock and then reacquire it
-			// before jumping back to us.
-//			cprintf("%d\t[%d](%d)%s\n", f,p->priority, p->numTicks, p->name);
+// Run the priority queue in RR
+DEBUG = 1;
+		int total_ran = 0; 				//the total processes that have run this loop
+		for (int pq_index = 0; pq_index < total_priority; pq_index++) { 	//loop over all processes in queue
+			p = priority_queue[pq_index]; 			//set p to the current process
+			if (p->state != RUNNABLE) { 		//if the process is not runnable
+				if(DEBUG == 1) cprintf("\tNot-Runnable: [%d-%s]\n", p->priority,p->name);
+				total_priority--; 					//reduce the total_priority - i.e. the size of the priority queue
+				for (int i = pq_index; i < total_priority; i++) 	//from i to total_priority:
+					priority_queue[i] = priority_queue[i+1]; 	//set pq[i] to pq[i+1]
+				pq_index--; 						//reduce the current for-loop back one iteration.
+				continue; 						//This is so that we check for state!=RUNNABLE again
+			} 				// if the process is not runnable, skip to next process
+			if(DEBUG == 1) cprintf("\tRun: [%d-%s]\n", p->priority,p->name);
+
+
+			//Switch control over the processor
 			proc = p;
 			switchuvm(p);
 			p->state = RUNNING;
 			p->numTicks++;
 			swtch(&cpu->scheduler, proc->context);
 			switchkvm();
-			// Process is done running for now.
-			// It should have changed its p->state before coming back.
 			proc = 0;
-//			cprintf("\n");
+			//
+			total_ran++; 				//update our counter for the processes that have been run.
 		}
-		//if we didn't run all the processes (meaning SOME died) just force a new table
-//		cprintf("CURRENT PRIORITY WAS: %d [%d - %d]\n", current_priority, total_ran, total_priority);
-		if (total_ran < total_priority)current_priority = 201; 		//THIS IS NOT A SOLUTION, WE SHOULD SIMPLY BE REARRANGING THE QUEUE, NOT JUST FORCING A NEW ONE
+DEBUG = 0;
+		if(DEBUG == 1) cprintf("\ttotal - ran = %d\n", total_priority-total_ran);
 		release(&ptable.lock); 					//unlock table
 	}
 }
