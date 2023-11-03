@@ -311,25 +311,20 @@ DEBUG=0;
 		}
 		if (DEBUG == 1) cprintf("\t<SAVED %d processes at %d priority>\n", total_priority, current_priority);
 // Display the contents of the prioirty queue
+DEBUG = 1;
 		if(DEBUG == 1) {
 			cprintf("\tPriority Queue (len:%d)| ", total_priority);
 			for (int f = 0; f < total_priority; f++) { 	//loop over all processes in queue
 				p = priority_queue[f];
-				cprintf("%d:[%d-%s]", f,p->priority,p->name);
+				cprintf("[%d-%s-%d],", p->priority,p->name,p->pid);
 			}
 			cprintf("\n");
 		}
 // Run the priority queue in RR
-//		int total_ran = 0; 				//the total processes that have run this loop
-DEBUG = 0;
 		for (int pq_index = 0; pq_index < total_priority; pq_index++) { 	//loop over all processes in queue
 			p = priority_queue[pq_index]; 					//set p to the current process in the priority queue
-			if (p->state != RUNNABLE) { 					//if the process is not runnable
+			if (p->state != RUNNABLE || p->priority != current_priority) { 	//if the process is not runnable OR if it changed its priority
 				if(DEBUG == 1) cprintf("\tNot-Runnable: [%d-%s]\n", p->priority,p->name);
-	//			total_priority--; 					//reduce the total_priority - i.e. the size of the priority queue
-	//			for (int i = pq_index; i < total_priority; i++) 	//from the current proc, to the last proc in the priority queue:
-	//				priority_queue[i] = priority_queue[i+1]; 	//set pq[i] to pq[i+1] |might be an edge case where we hit i+1 == NPROC, doesnt matter right now
-	//			pq_index--; 						//go back one iteration to check if the process is runnable
 				continue; 						//restart(because pq_index--) this iteration
 			} 								
 			if(DEBUG == 1) cprintf("\tRun: [%d-%s]\n", p->priority,p->name);
@@ -343,10 +338,8 @@ DEBUG = 0;
 			switchkvm();
 			proc = 0;
 			//
-//			total_ran++; 				//update our counter for the processes that have been run.
 		}
 DEBUG = 0;
-//		if(DEBUG == 1) cprintf("\ttotal - ran = %d\n", total_priority-total_ran);
 		release(&ptable.lock); 					//unlock table
 	}
 }
