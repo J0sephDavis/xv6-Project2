@@ -14,11 +14,12 @@ int main() {
 		else if (forkVal == 0) {//child
 			setpriority(49+iterator);
 			//printf(0,"%d:FORK HERE, IM TRYING!\n",iterator);
-			for (int a = 0; a < iterator*100000*iterator; a++)  value++; 	//keeps the process running for eternity (so we can see how many ticks it has compared to the others)
-			printf(0,"<F%d:DONE!>",iterator);
-			break; 			//so that the fork doesn't somehow spawn its own children.
+			for (int a = 0; a < iterator*1000000*iterator; a++)
+				value++; 	//keeps the process running for eternity (so we can see how many ticks it has compared to the others)
+			exit(); 		//so that the fork doesn't somehow spawn its own children.
 		}
 	}
 	while (wait() != -1) { continue; };
+	printf(1,"<PRIORITY TEST END>\n");
 	exit(); //without a proper exit we incur trap penalties
 }
