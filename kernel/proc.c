@@ -326,10 +326,10 @@ DEBUG = 0;
 			p = priority_queue[pq_index]; 					//set p to the current process in the priority queue
 			if (p->state != RUNNABLE) { 					//if the process is not runnable
 				if(DEBUG == 1) cprintf("\tNot-Runnable: [%d-%s]\n", p->priority,p->name);
-				total_priority--; 					//reduce the total_priority - i.e. the size of the priority queue
-				for (int i = pq_index; i < total_priority; i++) 	//from the current proc, to the last proc in the priority queue:
-					priority_queue[i] = priority_queue[i+1]; 	//set pq[i] to pq[i+1] |might be an edge case where we hit i+1 == NPROC, doesnt matter right now
-				pq_index--; 						//go back one iteration to check if the process is runnable
+	//			total_priority--; 					//reduce the total_priority - i.e. the size of the priority queue
+	//			for (int i = pq_index; i < total_priority; i++) 	//from the current proc, to the last proc in the priority queue:
+	//				priority_queue[i] = priority_queue[i+1]; 	//set pq[i] to pq[i+1] |might be an edge case where we hit i+1 == NPROC, doesnt matter right now
+	//			pq_index--; 						//go back one iteration to check if the process is runnable
 				continue; 						//restart(because pq_index--) this iteration
 			} 								
 			if(DEBUG == 1) cprintf("\tRun: [%d-%s]\n", p->priority,p->name);
