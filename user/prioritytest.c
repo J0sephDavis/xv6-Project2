@@ -5,17 +5,20 @@
 int main() {
 	int forkVal,iterator;
 	int value = 0;
-	for (iterator = 7; iterator < 10; iterator++) {
+	for (iterator = 1; iterator < 10; iterator++) {
 		forkVal = fork();
 		if (forkVal < 0) {
 			printf(2,"<fork failed>\n");
 			return -1;
 		}
 		else if (forkVal == 0) {//child
-			setpriority(iterator*10);
-			for (;;)  value++; 	//keeps the process running for eternity (so we can see how many ticks it has compared to the others)
+			setpriority(iterator*5);
+			printf(0,"%d:FORK HERE, IM TRYING!\n",iterator);
+			for (int a = 0; a < iterator*10000; a++)  value++; 	//keeps the process running for eternity (so we can see how many ticks it has compared to the others)
+			printf(0,"%d:FORK HERE, IM DONE!\n",iterator);
 			break; 			//so that the fork doesn't somehow spawn its own children.
 		}
 	}
+	while (wait() != -1) { continue; };
 	exit(); //without a proper exit we incur trap penalties
 }
