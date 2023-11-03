@@ -254,7 +254,14 @@ void scheduler(void) {
 	struct proc* priority_queue[NPROC]; 						//contains the processes that are to run
 	//
 	for (;;) { 									// Enable interrupts on this processor.
-DEBUG=0;
+	/* NOTE - on the overall state of the scheduler:
+	 * While I believe the code is now working in this section,
+	 * I believe it may be too complex/inefficient. With this
+	 * quantity of iteration statements,viz. "for", & the
+	 * logical statements associated with each, the scheduler
+	 * likely runs somewhat slowly. However, this is the
+	 * current best implementation I have made
+	 * */
 		sti();
 		//
 		int tmp_highestPriority = 201; 						//the highest priority found after scouring the table
@@ -280,6 +287,7 @@ DEBUG=0;
 		};
 		if (DEBUG == 1) cprintf("\t<FOUND %d processes at %d priority>\n", tmp_countPriority, tmp_highestPriority);
 // Build the priority queue
+		//if the priority queue must be built from the ground-up
 		if (current_priority != tmp_highestPriority) { 				//if the priority queues are absolutely different rebuild
 			current_priority = tmp_highestPriority; 			//set the new current priority
 			total_priority = 0; 						//reset the size of the priority queue
@@ -289,29 +297,44 @@ DEBUG=0;
 				priority_queue[total_priority++] = p; 			//set the current index of the priority_queue to the new value
 			}
 		}
+		//priority_queue is of same priority, don't need a rebuild. check for differences
 		else {
-			for (int pq_index = 0; pq_index < total_priority; pq_index++) { 	//loop over all processes in queue
-				p = priority_queue[pq_index]; 					//set p to the current process in the priority queue
-				if (p->state != RUNNABLE) { 					//if the process is not runnable
+			//prune dead processes from the queue
+			for (int pq_index = 0; pq_index < total_priority; pq_index++) { //for each process in the priority queue
+				p = priority_queue[pq_index]; 				//set p to the current process
+				if (p->state != RUNNABLE) { 				//if the process is not runnable
 					if (DEBUG==1) cprintf("\tDEAD\n");
-					total_priority--;
-					for (int i = pq_index; i < total_priority; i++) 	//from the current proc, to the last proc in the priority queue:
-						priority_queue[i] = priority_queue[i+1]; //set pq[i] to pq[i+1] |might be an edge case where we hit i+1 == NPROC, doesnt matter now
+						total_priority--; 			//reduce total_priority
+					for (int i = pq_index; i < total_priority; i++) //from the current process in pq, to the last process in pq:
+						priority_queue[i] = priority_queue[i+1];//set pq[i] to pq[i+1] | i.e, move the entire queue LEFT one entry over
+											//the non-runnable entry. ISSUE: untested behavior when total_priority=NPROC 
 				}
 			}
-			for (p = ptable.proc; p<&ptable.proc[NPROC]; p++) {
-				if (p->priority != current_priority) continue; 		//if the priority of the current process isn't what we're looking for, skip
-				if (p->state != RUNNABLE) continue; 			//if the process isn't runnable, SKIP
-				int already_in_queue = 0;
-				for (int i = 0; i < total_priority; i++) {
-					if (p->pid == priority_queue[i]->pid) already_in_queue=1;
+			/* NOTE on the following for loop & its purpose:
+			 * Might be worthwhile to make ANOTHER queue for new processes,
+			 * then running each new process in RR before adding to the
+			 * priority queue? I think I prefer just moving them to the
+			 * beginning of the queue and letting them run before the others
+			 * but I also don't think it matters, because they will end-up
+			 * executing anyways */
+			//add the processes that are not currently in the queue
+			for (p = ptable.proc; p<&ptable.proc[NPROC]; p++) { 		//FOR each process in the table
+				if (p->priority != current_priority) continue; 		//IF the priority of the current process isn't what we're looking for, skip
+				if (p->state != RUNNABLE) continue; 			//IF the process isn't runnable, SKIP
+				int already_in_queue = 0; 				//flag, if == 1, process is in the queue already, if == 0, it is not
+				for (int i = 0; i < total_priority; i++) 		//FOR each process in the priority queue:
+					if (p->pid == priority_queue[i]->pid) 		//IF a process with the same PID is already in the queue,
+						already_in_queue=1; 			//raise the "already_in_queue" flag
+				if (already_in_queue == 0) { 				//IF already_in_queue == 0,
+					//for (int i = total_priority; i > 0; i++) 	//FOR each process in the priority queue:
+					//	priority_queue[i] = priority_queue[i-1];//move the entire queue RIGHT one entry
+					//priority_queue[0] = p;			//set the first index of the priority_queue to the new value
+					priority_queue[total_priority++] = p;		//set the final index of the priority_queue to the new value & increment total_priority
 				}
-				if (already_in_queue == 0) priority_queue[total_priority++] = p; 			//set the current index of the priority_queue to the new value
 			}
 		}
 		if (DEBUG == 1) cprintf("\t<SAVED %d processes at %d priority>\n", total_priority, current_priority);
 // Display the contents of the prioirty queue
-DEBUG = 0;
 		if(DEBUG == 1) {
 			cprintf("\tPriority Queue (len:%d)| ", total_priority);
 			for (int f = 0; f < total_priority; f++) { 	//loop over all processes in queue
@@ -320,16 +343,14 @@ DEBUG = 0;
 			}
 			cprintf("\n");
 		}
-DEBUG = 0;
 // Run the priority queue in RR
 		for (int pq_index = 0; pq_index < total_priority; pq_index++) { 	//loop over all processes in queue
 			p = priority_queue[pq_index]; 					//set p to the current process in the priority queue
 			if (p->state != RUNNABLE || p->priority != current_priority) { 	//if the process is not runnable OR if it changed its priority
 				if(DEBUG == 1) cprintf("\tNot-Runnable: [%d-%s]\n", p->priority,p->name);
-				continue; 						//restart(because pq_index--) this iteration
+				continue; 						//restart(note: pq_index--) this iteration
 			} 								
 			if(DEBUG == 1) cprintf("\tRun: [%d-%s]\n", p->priority,p->name);
-
 			//Switch control over the processor
 			proc = p;
 			switchuvm(p);
@@ -340,7 +361,8 @@ DEBUG = 0;
 			proc = 0;
 			//
 		}
-		release(&ptable.lock); 					//unlock table
+// Release the table lock & let iteration begin again
+		release(&ptable.lock); 							//unlock table
 	}
 }
 //the lottery scheduler
