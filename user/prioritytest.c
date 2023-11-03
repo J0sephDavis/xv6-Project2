@@ -12,10 +12,14 @@ int main() {
 			return -1;
 		}
 		else if (forkVal == 0) {//child
-			setpriority(49+iterator);
-			//printf(0,"%d:FORK HERE, IM TRYING!\n",iterator);
-			for (int a = 0; a < iterator*1000000*iterator; a++)
-				value++; 	//keeps the process running for eternity (so we can see how many ticks it has compared to the others)
+			if (iterator >5) {
+				setpriority(200); 
+				for (;;) value++;
+			}
+			else {
+				setpriority(180);
+				for (;;) value++;
+			}
 			exit(); 		//so that the fork doesn't somehow spawn its own children.
 		}
 	}
