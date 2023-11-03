@@ -254,6 +254,7 @@ void scheduler(void) {
 	struct proc* priority_queue[NPROC]; 						//contains the processes that are to run
 	//
 	for (;;) { 									// Enable interrupts on this processor.
+DEBUG=0;
 		sti();
 		//
 		int tmp_highestPriority = 201; 						//the highest priority found after scouring the table
@@ -270,14 +271,14 @@ void scheduler(void) {
 			}
 			else if (p->priority == tmp_highestPriority) 			//if there are processes of EQUAL PRIORITY to the current highest
 				tmp_countPriority++; 					//increment tmp_countPriority
-			//if(DEBUG == 1)cprintf("\t\tfound runnable [%d-%s]\n", p->priority,p->name);
+			if(DEBUG == 1)cprintf("\tfound runnable [%d-%s]\n", p->priority,p->name);
 		}
 		if (tmp_countPriority == 0) { 						//if there are no processes to be run
 			if (DEBUG == 1) cprintf("no processes found.\n");
 			release(&ptable.lock); 						//release the table lock
 			continue; 							//skip this loop
 		};
-		if (DEBUG == 1) cprintf("we have found %d processes at %d priority\n", tmp_countPriority, tmp_highestPriority);
+		if (DEBUG == 1) cprintf("\t<FOUND %d processes at %d priority>\n", tmp_countPriority, tmp_highestPriority);
 // Build the priority queue
 		if (current_priority != tmp_highestPriority) { 				//if the priority queues are absolutely different rebuild
 			current_priority = tmp_highestPriority; 			//set the new current priority
@@ -288,30 +289,50 @@ void scheduler(void) {
 				priority_queue[total_priority++] = p; 			//set the current index of the priority_queue to the new value
 			}
 		}
+		else {
+			for (int pq_index = 0; pq_index < total_priority; pq_index++) { 	//loop over all processes in queue
+				p = priority_queue[pq_index]; 					//set p to the current process in the priority queue
+				if (p->state != RUNNABLE) { 					//if the process is not runnable
+					if (DEBUG==1) cprintf("\tDEAD\n");
+					total_priority--;
+					for (int i = pq_index; i < total_priority; i++) 	//from the current proc, to the last proc in the priority queue:
+						priority_queue[i] = priority_queue[i+1]; //set pq[i] to pq[i+1] |might be an edge case where we hit i+1 == NPROC, doesnt matter now
+				}
+			}
+			for (p = ptable.proc; p<&ptable.proc[NPROC]; p++) {
+				if (p->priority != current_priority) continue; 		//if the priority of the current process isn't what we're looking for, skip
+				if (p->state != RUNNABLE) continue; 			//if the process isn't runnable, SKIP
+				int already_in_queue = 0;
+				for (int i = 0; i < total_priority; i++) {
+					if (p->pid == priority_queue[i]->pid) already_in_queue=1;
+				}
+				if (already_in_queue == 0) priority_queue[total_priority++] = p; 			//set the current index of the priority_queue to the new value
+			}
+		}
+		if (DEBUG == 1) cprintf("\t<SAVED %d processes at %d priority>\n", total_priority, current_priority);
 // Display the contents of the prioirty queue
-//		if(DEBUG == 1) {
-//			cprintf("\tPriority Queue (len:%d)| ", total_priority);
-//			for (int f = 0; f < total_priority; f++) { 	//loop over all processes in queue
-//				p = priority_queue[f];
-//				cprintf("%d:[%d-%s]", f,p->priority,p->name);
-//			}
-//			cprintf("\n");
-//		}
+		if(DEBUG == 1) {
+			cprintf("\tPriority Queue (len:%d)| ", total_priority);
+			for (int f = 0; f < total_priority; f++) { 	//loop over all processes in queue
+				p = priority_queue[f];
+				cprintf("%d:[%d-%s]", f,p->priority,p->name);
+			}
+			cprintf("\n");
+		}
 // Run the priority queue in RR
-DEBUG = 1;
-		int total_ran = 0; 				//the total processes that have run this loop
+//		int total_ran = 0; 				//the total processes that have run this loop
+DEBUG = 0;
 		for (int pq_index = 0; pq_index < total_priority; pq_index++) { 	//loop over all processes in queue
-			p = priority_queue[pq_index]; 			//set p to the current process
-			if (p->state != RUNNABLE) { 		//if the process is not runnable
+			p = priority_queue[pq_index]; 					//set p to the current process in the priority queue
+			if (p->state != RUNNABLE) { 					//if the process is not runnable
 				if(DEBUG == 1) cprintf("\tNot-Runnable: [%d-%s]\n", p->priority,p->name);
 				total_priority--; 					//reduce the total_priority - i.e. the size of the priority queue
-				for (int i = pq_index; i < total_priority; i++) 	//from i to total_priority:
-					priority_queue[i] = priority_queue[i+1]; 	//set pq[i] to pq[i+1]
-				pq_index--; 						//reduce the current for-loop back one iteration.
-				continue; 						//This is so that we check for state!=RUNNABLE again
-			} 				// if the process is not runnable, skip to next process
+				for (int i = pq_index; i < total_priority; i++) 	//from the current proc, to the last proc in the priority queue:
+					priority_queue[i] = priority_queue[i+1]; 	//set pq[i] to pq[i+1] |might be an edge case where we hit i+1 == NPROC, doesnt matter right now
+				pq_index--; 						//go back one iteration to check if the process is runnable
+				continue; 						//restart(because pq_index--) this iteration
+			} 								
 			if(DEBUG == 1) cprintf("\tRun: [%d-%s]\n", p->priority,p->name);
-
 
 			//Switch control over the processor
 			proc = p;
@@ -322,10 +343,10 @@ DEBUG = 1;
 			switchkvm();
 			proc = 0;
 			//
-			total_ran++; 				//update our counter for the processes that have been run.
+//			total_ran++; 				//update our counter for the processes that have been run.
 		}
 DEBUG = 0;
-		if(DEBUG == 1) cprintf("\ttotal - ran = %d\n", total_priority-total_ran);
+//		if(DEBUG == 1) cprintf("\ttotal - ran = %d\n", total_priority-total_ran);
 		release(&ptable.lock); 					//unlock table
 	}
 }
