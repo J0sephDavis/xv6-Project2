@@ -311,7 +311,7 @@ DEBUG=0;
 		}
 		if (DEBUG == 1) cprintf("\t<SAVED %d processes at %d priority>\n", total_priority, current_priority);
 // Display the contents of the prioirty queue
-DEBUG = 1;
+DEBUG = 0;
 		if(DEBUG == 1) {
 			cprintf("\tPriority Queue (len:%d)| ", total_priority);
 			for (int f = 0; f < total_priority; f++) { 	//loop over all processes in queue
@@ -320,6 +320,7 @@ DEBUG = 1;
 			}
 			cprintf("\n");
 		}
+DEBUG = 0;
 // Run the priority queue in RR
 		for (int pq_index = 0; pq_index < total_priority; pq_index++) { 	//loop over all processes in queue
 			p = priority_queue[pq_index]; 					//set p to the current process in the priority queue
@@ -339,7 +340,6 @@ DEBUG = 1;
 			proc = 0;
 			//
 		}
-DEBUG = 0;
 		release(&ptable.lock); 					//unlock table
 	}
 }

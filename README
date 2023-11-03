@@ -1,3 +1,9 @@
+[S56.30]
+The system has been modified by Joseph Davis to perform priority-based
+scheduling, as well as lottery-based scheduling. This is for the
+COP4610 - Operating Systems Concepts course of Fall 2023.
+Assignment: XV6 Mini-Project 2.
+-----Below is the original README-----
 xv6 is a re-implementation of Dennis Ritchie's and Ken Thompson's Unix
 Version 6 (v6).  xv6 loosely follows the structure and style of v6,
 but is implemented for a modern x86-based multiprocessor using ANSI C.
