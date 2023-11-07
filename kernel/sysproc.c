@@ -38,7 +38,6 @@ int sys_getpinfo(void) {
 int sys_setpriority(void) {
 	int priority_to_set;
 	//this is the way to pass an integer as a parameters in sysproc.c, will pass this tickets in the experiment
-	//not actually sure what the above comment is supposed to convey... 
 	if (argint(0, &priority_to_set) < 0)
 		return -1;
 	return setpriority(priority_to_set);
