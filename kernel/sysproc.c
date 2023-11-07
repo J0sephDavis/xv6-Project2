@@ -19,7 +19,6 @@ sys_fork(void)
 int sys_settickets(void) {
 	int tickets_to_set;
 	//this is the way to pass an integer as a parameters in sysproc.c, will pass this tickets in the experiment
-	//not actually sure what the above comment is supposed to convey... 
 	if (argint(0, &tickets_to_set) < 0)
 		return -1;
 	if (tickets_to_set < 1)
